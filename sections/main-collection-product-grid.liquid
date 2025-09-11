@@ -4,7 +4,45 @@
   .mfp-container .collection-sidebar .mfp-close {
       background-color: {{ settings.color_drawer_bg }};
   }
+
+  /* Sticky sidebar filters */
+  .o-layout__item.u-1\/1.u-1\/4-sidebar-desk.u-1\/5-sidebar-wide {
+    position: sticky;
+    align-self: flex-start; /* ensures correct sticky behavior */
+  }
+
+  /* Sticky top filter/sort bar */
+  .collection-main__actions {
+      position: sticky;
+      top: 0px; /* adjust if header is taller */
+      background: #fff;
+      z-index: 6;
+      padding: 8px 0;
+  }
 </style>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    function updateSidebarOffset() {
+      const actionsBar = document.querySelector(".collection-main__actions");
+      const sidebar = document.querySelector(".o-layout__item.u-1\\/1.u-1\\/4-sidebar-desk.u-1\\/5-sidebar-wide");
+
+      if (actionsBar && sidebar) {
+        const actionsHeight = actionsBar.offsetHeight;
+        const header = document.querySelector("header") || null;
+        const headerHeight = header ? header.offsetHeight : 0;
+
+        // Total offset = header height + actions bar height
+        const totalOffset = headerHeight + actionsHeight;
+
+        sidebar.style.top = totalOffset + "px";
+      }
+    }
+
+    // Run on load + on resize (handles responsive layouts)
+    updateSidebarOffset();
+    window.addEventListener("resize", updateSidebarOffset);
+  });
+</script>
 {%- liquid
   assign sort_by = collection.sort_by | default: collection.default_sort_by
   assign limit = section.settings.grid | times: section.settings.rows
