@@ -439,39 +439,225 @@
                                       {%- liquid
                                         assign filter_label = filter.label | escape | strip | downcase
                                       -%}
+                                      {%- if filter.label == 'Size' -%}
+                                        <details
+                                          {% if accordion_open %}
+                                            open
+                                          {% endif %}
+                                          id="{{ section.id }}-filter-{{ forloop.index }}"
+                                          class="collection-sidebar__filter-group"
+                                        >
+                                          <summary class="collection-sidebar__filter-trigger">
+                                            <span>{{ filter.label }}</span>
+                                            <summary-icon>
+                                              <i class="icon icon--plus-t" aria-hidden="true"></i>
+                                            </summary-icon>
+                                          </summary>
 
-                                      <details
-                                        {% if accordion_open %}
-                                          open
-                                        {% endif %}
-                                        id="{{ section.id }}-filter-{{ forloop.index }}"
-                                        class="collection-sidebar__filter-group"
-                                      >
-                                        <summary class="collection-sidebar__filter-trigger">
-                                          <span>{{ filter.label }}</span>
-                                          <summary-icon>
-                                            <i class="icon icon--plus-t" aria-hidden="true"></i>
-                                          </summary-icon>
-                                        </summary>
+                                          <details-content class="collection-sidebar__filter__accordion">
+                                            <style>
+                                              .size-filters .size-group {
+                                                margin-bottom: 1.5rem;
+                                              }
+                                              .size-group-title {
+                                                font-weight: 600;
+                                                margin: 1rem 0 0.5rem 0;
+                                                font-size: 0.875rem;
+                                                color: var(--color-foreground);
+                                                text-transform: uppercase;
+                                                letter-spacing: 0.05em;
+                                                border-bottom: 1px solid var(--color-border);
+                                                padding-bottom: 0.25rem;
+                                              }
+                                              .size-grid {
+                                                display: grid;
+                                                grid-template-columns: repeat(3, 1fr);
+                                                gap: 0.75rem;
+                                                margin-bottom: 1rem;
+                                              }
+                                              .collection-sidebar__item {
+                                                display: flex;
+                                                align-items: center;
+                                                padding: 0.5rem 0;
+                                                border: none;
+                                              }
+                                              .collection-sidebar__link {
+                                                display: flex;
+                                                align-items: center;
+                                                width: 100%;
+                                                padding: 0.25rem;
+                                                border-radius: var(--border-radius);
+                                                transition: background-color 0.2s ease;
+                                              }
+                                              .collection-sidebar__link:hover {
+                                                background-color: var(--color-background-hover);
+                                              }
+                                              .collection-sidebar__link__box {
+                                                margin-right: 0.5rem;
+                                                flex-shrink: 0;
+                                              }
+                                              .collection-sidebar__link__count {
+                                                margin-left: auto;
+                                                font-size: 0.75rem;
+                                                color: var(--color-foreground-50);
+                                              }
+                                              @media screen and (max-width: 749px) {
+                                                .size-grid {
+                                                  grid-template-columns: repeat(2, 1fr);
+                                                  gap: 0.5rem;
+                                                }
+                                                .size-group-title {
+                                                  font-size: 0.75rem;
+                                                }
+                                              }
+                                            </style>
+                                            <div class="collection-sidebar__items size-filters">
+                                              <!-- Group 1: Clothing Sizes (Apparel) -->
+                                              <div class="size-group">
+                                                <h4 class="size-group-title">Clothing Sizes (Apparel)</h4>
+                                                <div class="size-grid">
+                                                  {%- for filter_value in filter.values -%}
+                                                    {%- assign label = filter_value.label | strip | downcase -%}
+                                                    {%- if label == 's' or label == 'm' or label == 'l' or label == 'xl' or label == 'xxl' -%}
+                                                      <div class="collection-sidebar__item{% if filter_value.count == 0 and filter_value.active == false %} collection-sidebar__item--disabled{% endif %}">
+                                                        <input
+                                                          type="checkbox"
+                                                          name="{{ filter_value.param_name }}"
+                                                          value="{{ filter_value.value }}"
+                                                          class="collection-sidebar__filter__input"
+                                                          id="Filter-{{ filter.label | handle }}-{{ filter_value.value | handle }}"
+                                                          {% if filter_value.active -%}
+                                                            checked
+                                                          {%- endif %}
+                                                          {% if filter_value.count == 0 and filter_value.active == false %}
+                                                            disabled
+                                                          {% endif %}
+                                                        >
+                                                        <label for="Filter-{{ filter.label | handle }}-{{ filter_value.value | handle }}" class="collection-sidebar__link js-filter-label">
+                                                          <span class="collection-sidebar__link__box">
+                                                            <i class="icon icon--tick" aria-hidden="true"></i>
+                                                          </span>
+                                                          {{ filter_value.label | escape }}
+                                                          {% if block.settings.count %}
+                                                            <span class="collection-sidebar__link__count">{{ filter_value.count }}</span>
+                                                          {% endif %}
+                                                        </label>
+                                                      </div>
+                                                    {%- endif -%}
+                                                  {%- endfor -%}
+                                                </div>
+                                              </div>
 
-                                        <details-content class="collection-sidebar__filter__accordion">
-                                          <ul class="collection-sidebar__items o-list-bare">
-                                            {%- for filter_value in filter.values -%}
-                                              {% render 'collection-filter-item',
-                                                filter: filter,
-                                                filter_value: filter_value,
-                                                filter_label: filter_label,
-                                                swatches_enabled: swatches_enabled,
-                                                triggers: triggers,
-                                                show_count: block.settings.count,
-                                                index: forloop.index
-                                              %}
-                                            {%- endfor -%}
-                                          </ul>
-                                        </details-content>
-                                      </details>
+                                              <!-- Group 2: Waist Sizes (Bottoms / Pants / Jeans) -->
+                                              <div class="size-group">
+                                                <h4 class="size-group-title">Waist Sizes (Bottoms / Pants / Jeans)</h4>
+                                                <div class="size-grid">
+                                                  {%- for filter_value in filter.values -%}
+                                                    {%- assign label = filter_value.label | strip | downcase -%}
+                                                    {%- if label contains "'" -%}
+                                                      <div class="collection-sidebar__item{% if filter_value.count == 0 and filter_value.active == false %} collection-sidebar__item--disabled{% endif %}">
+                                                        <input
+                                                          type="checkbox"
+                                                          name="{{ filter_value.param_name }}"
+                                                          value="{{ filter_value.value }}"
+                                                          class="collection-sidebar__filter__input"
+                                                          id="Filter-{{ filter.label | handle }}-{{ filter_value.value | handle }}"
+                                                          {% if filter_value.active -%}
+                                                            checked
+                                                          {%- endif %}
+                                                          {% if filter_value.count == 0 and filter_value.active == false %}
+                                                            disabled
+                                                          {% endif %}
+                                                        >
+                                                        <label for="Filter-{{ filter.label | handle }}-{{ filter_value.value | handle }}" class="collection-sidebar__link js-filter-label">
+                                                          <span class="collection-sidebar__link__box">
+                                                            <i class="icon icon--tick" aria-hidden="true"></i>
+                                                          </span>
+                                                          {{ filter_value.label | escape }}
+                                                          {% if block.settings.count %}
+                                                            <span class="collection-sidebar__link__count">{{ filter_value.count }}</span>
+                                                          {% endif %}
+                                                        </label>
+                                                      </div>
+                                                    {%- endif -%}
+                                                  {%- endfor -%}
+                                                </div>
+                                              </div>
+
+                                              <!-- Group 3: Footwear Sizes (Shoes) -->
+                                              <div class="size-group">
+                                                <h4 class="size-group-title">Footwear Sizes (Shoes)</h4>
+                                                <div class="size-grid">
+                                                  {%- for filter_value in filter.values -%}
+                                                    {%- assign label = filter_value.label | strip | downcase -%}
+                                                    {%- if label contains 'uk ' -%}
+                                                      <div class="collection-sidebar__item{% if filter_value.count == 0 and filter_value.active == false %} collection-sidebar__item--disabled{% endif %}">
+                                                        <input
+                                                          type="checkbox"
+                                                          name="{{ filter_value.param_name }}"
+                                                          value="{{ filter_value.value }}"
+                                                          class="collection-sidebar__filter__input"
+                                                          id="Filter-{{ filter.label | handle }}-{{ filter_value.value | handle }}"
+                                                          {% if filter_value.active -%}
+                                                            checked
+                                                          {%- endif %}
+                                                          {% if filter_value.count == 0 and filter_value.active == false %}
+                                                            disabled
+                                                          {% endif %}
+                                                        >
+                                                        <label for="Filter-{{ filter.label | handle }}-{{ filter_value.value | handle }}" class="collection-sidebar__link js-filter-label">
+                                                          <span class="collection-sidebar__link__box">
+                                                            <i class="icon icon--tick" aria-hidden="true"></i>
+                                                          </span>
+                                                          {{ filter_value.label | escape }}
+                                                          {% if block.settings.count %}
+                                                            <span class="collection-sidebar__link__count">{{ filter_value.count }}</span>
+                                                          {% endif %}
+                                                        </label>
+                                                      </div>
+                                                    {%- endif -%}
+                                                  {%- endfor -%}
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </details-content>
+                                        </details>
+                                      {%- else -%}
+                                        <!-- Original List Layout for Non-Size Filters (Unchanged) -->
+                                        <details
+                                          {% if accordion_open %}
+                                            open
+                                          {% endif %}
+                                          id="{{ section.id }}-filter-{{ forloop.index }}"
+                                          class="collection-sidebar__filter-group"
+                                        >
+                                          <summary class="collection-sidebar__filter-trigger">
+                                            <span>{{ filter.label }}</span>
+                                            <summary-icon>
+                                              <i class="icon icon--plus-t" aria-hidden="true"></i>
+                                            </summary-icon>
+                                          </summary>
+
+                                          <details-content class="collection-sidebar__filter__accordion">
+                                            <ul class="collection-sidebar__items o-list-bare">
+                                              {%- for filter_value in filter.values -%}
+                                                {% render 'collection-filter-item',
+                                                  filter: filter,
+                                                  filter_value: filter_value,
+                                                  filter_label: filter_label,
+                                                  swatches_enabled: swatches_enabled,
+                                                  triggers: triggers,
+                                                  show_count: block.settings.count,
+                                                  index: forloop.index
+                                                %}
+                                              {%- endfor -%}
+                                            </ul>
+                                          </details-content>
+                                        </details>
+                                      {%- endif -%}
 
                                     {%- when 'price_range' -%}
+                                      <!-- Price Range Filter (Unchanged) -->
                                       <details
                                         {% if accordion_open %}
                                           open
@@ -489,100 +675,62 @@
                                         <details-content class="collection-sidebar__filter__accordion">
                                           <div class="collection-sidebar__items">
                                             <price-range class="price-range">
-                                              {%- assign price_filter_min_value = filter.min_value.value
-                                                | divided_by: 100
-                                              -%}
-                                              {%- assign price_filter_max_value = filter.max_value.value
-                                                | divided_by: 100
-                                              -%}
+                                              {%- assign price_filter_min_value = filter.min_value.value | divided_by: 100 -%}
+                                              {%- assign price_filter_max_value = filter.max_value.value | divided_by: 100 -%}
                                               {%- assign price_filter_range_max = filter.range_max | divided_by: 100 -%}
 
                                               <div class="collection-sidebar__filter-price">
                                                 <div class="collection-sidebar__filter-price__item collection-sidebar__filter-price__item--from">
-                                                  <span class="collection-sidebar__filter-price__currency">
-                                                    {{- cart.currency.symbol -}}
-                                                  </span>
-
+                                                  <span class="collection-sidebar__filter-price__currency">{{- cart.currency.symbol -}}</span>
                                                   <input
                                                     name="{{ filter.min_value.param_name }}"
                                                     id="Filter-{{ filter.label }}-min-{{ forloop.index }}"
                                                     class="collection-sidebar__filter-price__input price-range__number"
-                                                    {% if filter.min_value.value -%}
-                                                      value="{{ price_filter_min_value }}"
-                                                    {%- endif %}
+                                                    {% if filter.min_value.value %} value="{{ price_filter_min_value }}" {%- endif %}
                                                     type="number"
                                                     inputmode="numeric"
                                                     placeholder="0"
                                                     min="0"
                                                     max="{{ price_filter_range_max }}"
                                                   >
-                                                  <label
-                                                    for="Filter-{{ filter.label }}-min-{{ forloop.index }}"
-                                                    class="collection-sidebar__filter-price__label"
-                                                  >
-                                                    {{- 'collections.general.from' | t -}}
-                                                  </label>
+                                                  <label for="Filter-{{ filter.label }}-min-{{ forloop.index }}" class="collection-sidebar__filter-price__label">{{- 'collections.general.from' | t -}}</label>
                                                 </div>
 
-                                                <div class="collection-sidebar__filter-price__item collection-sidebar__filter-price__item--separator">
-                                                  -
-                                                </div>
+                                                <div class="collection-sidebar__filter-price__item collection-sidebar__filter-price__item--separator">-</div>
 
                                                 <div class="collection-sidebar__filter-price__item collection-sidebar__filter-price__item--to">
-                                                  <span class="collection-sidebar__filter-price__currency">
-                                                    {{- cart.currency.symbol -}}
-                                                  </span>
+                                                  <span class="collection-sidebar__filter-price__currency">{{- cart.currency.symbol -}}</span>
                                                   <input
                                                     name="{{ filter.max_value.param_name }}"
                                                     id="Filter-{{ filter.label }}-max-{{ forloop.index }}"
                                                     class="collection-sidebar__filter-price__input price-range__number"
-                                                    {% if filter.max_value.value -%}
-                                                      value="{{ price_filter_max_value }}"
-                                                    {%- endif %}
+                                                    {% if filter.max_value.value %} value="{{ price_filter_max_value }}" {%- endif %}
                                                     type="number"
                                                     inputmode="numeric"
                                                     placeholder="{{ price_filter_range_max }}"
                                                     min="0"
                                                     max="{{ price_filter_range_max }}"
                                                   >
-
-                                                  <label
-                                                    for="Filter-{{ filter.label }}-max-{{ forloop.index }}"
-                                                    class="collection-sidebar__filter-price__label"
-                                                  >
-                                                    {{- 'collections.general.to' | t -}}
-                                                  </label>
+                                                  <label for="Filter-{{ filter.label }}-max-{{ forloop.index }}" class="collection-sidebar__filter-price__label">{{- 'collections.general.to' | t -}}</label>
                                                 </div>
                                               </div>
 
                                               <div class="price-range__group">
                                                 <div class="price-range__track">
-                                                  <label class="u-hidden-visually" for="Filter-Price-Track-1"
-                                                    >Price range mininum</label
-                                                  >
+                                                  <label class="u-hidden-visually" for="Filter-Price-Track-1">Price range minimum</label>
                                                   <input
                                                     class="price-range__input"
-                                                    {%- if filter.min_value.value -%}
-                                                      value="{{ price_filter_min_value }}"
-                                                    {%- else -%}
-                                                      value="0"
-                                                    {%- endif -%}
+                                                    {%- if filter.min_value.value -%} value="{{ price_filter_min_value }}" {%- else -%} value="0" {%- endif -%}
                                                     min="0"
                                                     max="{{ price_filter_range_max }}"
                                                     type="range"
                                                     tabindex="-1"
                                                     id="Filter-Price-Track-1"
                                                   >
-                                                  <label class="u-hidden-visually" for="Filter-Price-Track-2"
-                                                    >Price range maximum</label
-                                                  >
+                                                  <label class="u-hidden-visually" for="Filter-Price-Track-2">Price range maximum</label>
                                                   <input
                                                     class="price-range__input"
-                                                    {%- if filter.max_value.value -%}
-                                                      value="{{ price_filter_max_value }}"
-                                                    {%- else -%}
-                                                      value="{{ price_filter_range_max }}"
-                                                    {%- endif -%}
+                                                    {%- if filter.max_value.value -%} value="{{ price_filter_max_value }}" {%- else -%} value="{{ price_filter_range_max }}" {%- endif -%}
                                                     min="0"
                                                     max="{{ price_filter_range_max }}"
                                                     type="range"
