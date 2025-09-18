@@ -8,7 +8,7 @@
   /* Sticky sidebar filters */
   .o-layout__item.u-1\/1.u-1\/4-sidebar-desk.u-1\/5-sidebar-wide {
     position: sticky;
-    align-self: flex-start; /* ensures correct sticky behavior */
+    top: calc(var(--header-height, 60px) + var(--actions-bar-height, 40px));
   }
 
   /* Sticky top filter/sort bar */
@@ -31,16 +31,20 @@
         const header = document.querySelector("header") || null;
         const headerHeight = header ? header.offsetHeight : 0;
 
-        // Total offset = header height + actions bar height
         const totalOffset = headerHeight + actionsHeight;
-
         sidebar.style.top = totalOffset + "px";
       }
     }
 
-    // Run on load + on resize (handles responsive layouts)
+    // Run on load + on resize
     updateSidebarOffset();
     window.addEventListener("resize", updateSidebarOffset);
+
+    // Run again when Shopify replaces collection/filters
+    document.addEventListener("shopify:section:load", updateSidebarOffset);
+    document.addEventListener("shopify:section:unload", updateSidebarOffset);
+    document.addEventListener("shopify:section:select", updateSidebarOffset);
+    document.addEventListener("shopify:section:deselect", updateSidebarOffset);
   });
 </script>
 {%- liquid
@@ -425,9 +429,9 @@
                                   {%- liquid
                                     assign accordion_open = false
                                     if block.settings.filter_visibility == 'three' and forloop.index < 4
-                                      assign accordion_open = true
+                                      assign accordion_open = false
                                     elsif filter.active_values.size > 0 or block.settings.filter_visibility == 'all'
-                                      assign accordion_open = true
+                                      assign accordion_open = false
                                     endif
                                   -%}
                                   {%- case filter.type -%}
