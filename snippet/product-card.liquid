@@ -154,13 +154,6 @@
       endif
     endif
 
-    if container_ratio == 'natural'
-      assign image_container_bottom_padding = '100%'
-      if current_product and current_product.featured_media.preview_image != null
-        assign image_container_bottom_padding = 1 | divided_by: current_product.featured_media.preview_image.aspect_ratio | times: 100 | append: '%'
-      endif
-    endif
-
     unless current_product.available
       assign product_card_classes = product_card_classes | append: ' product-card--sold-out'
     endunless
@@ -239,6 +232,7 @@
               product-card__media
               {% if current_product %}
                 {% if secondary_image %} product-card__media--hover-image{% elsif settings.product_grid_hover == 'zoom' %} product-card__media--hover-zoom{% endif %}
+                product-card__media--swatch-overlay
               {% endif %}
             "
           >
@@ -280,6 +274,302 @@
               image_sizes: image_sizes,
               render_skeleton: true
             %}
+
+            {%- if current_product and current_product.variants.size > 1 -%}
+                <style>
+                    .product-card__media--swatch-overlay {
+                    position: relative;
+                    }
+                    .product-card__swatch-overlay {
+                    position: absolute;
+                    bottom: 12px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: rgba(255, 255, 255, 0.95);
+                    backdrop-filter: blur(10px);
+                    border-radius: 25px;
+                    padding: 8px 16px;
+                    opacity: 0;
+                    visibility: hidden;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    z-index: 15;
+                    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    min-width: 140px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    }
+                    .product-card__media:hover .product-card__swatch-overlay,
+                    .product-card__media--hover .product-card__swatch-overlay {
+                    opacity: 1;
+                    visibility: visible;
+                    transform: translateX(-50%) translateY(-2px);
+                    }
+                    .product-card__swatch__items {
+                    margin: 0;
+                    padding: 0;
+                    list-style: none;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    gap: 6px;
+                    flex-wrap: wrap;
+                    }
+                    .product-card__swatch__item {
+                    margin: 0;
+                    flex-shrink: 0;
+                    }
+                    .product-card__swatch__graphic {
+                    width: 28px;
+                    height: 28px;
+                    background: #ffffff;
+                    border: 2px solid #e0e0e0;
+                    border-radius: 6px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 11px;
+                    font-weight: 600;
+                    color: #333333;
+                    text-align: center;
+                    line-height: 1.2;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    position: relative;
+                    overflow: hidden;
+                    }
+                    .product-card__swatch__graphic:hover {
+                    transform: scale(1.1);
+                    border-color: #666666;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                    background: #f8f8f8;
+                    z-index: 5;
+                    }
+                    .product-card__swatch__graphic.active {
+                    border-color: #000000;
+                    background: #f0f0f0;
+                    }
+                    .product-card__overflow__item {
+                    position: absolute;
+                    right: -12px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    background: rgba(0, 0, 0, 0.8);
+                    color: white;
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 12px;
+                    font-weight: 600;
+                    text-decoration: none;
+                    z-index: 20;
+                    transition: all 0.2s ease;
+                    border: none;
+                    }
+                    .product-card__overflow__item:hover {
+                    background: rgba(0, 0, 0, 1);
+                    transform: translateY(-50%) scale(1.1);
+                    }
+                    @media (max-width: 749px) {
+                    .product-card__swatch-overlay {
+                        bottom: 8px;
+                        padding: 6px 12px;
+                        min-width: 120px;
+                    }
+                    .product-card__swatch__graphic {
+                        width: 24px;
+                        height: 24px;
+                        font-size: 10px;
+                    }
+                    .product-card__overflow__item {
+                        width: 24px;
+                        height: 24px;
+                        right: -10px;
+                        font-size: 11px;
+                    }
+                }
+                </style>
+
+                {%- assign size_option_index = -1 -%}
+                    {%- comment -%} Find Size Option Index {%- endcomment -%}
+                    {%- for option in current_product.options -%}
+                        {%- assign size_option_index = forloop.index0 -%}
+                        {%- break -%}
+                    {%- endfor -%}
+                    
+                    {%- comment -%} If no size option found, use first option {%- endcomment -%}
+                    {%- unless size_option_index >= 0 -%}
+                    {%- assign size_option_index = 0 -%}
+                    {%- endunless -%}
+
+                    <script>
+                        console.log('=== SIZE SWATCH DEBUG ===');
+                        console.log('Product:', {{ current_product.title | json }});
+                        console.log('Options:', {{ current_product.options | json }});
+                        console.log('Size Index:', {{ size_option_index | json }});
+                        console.log('Variant Count:', {{ current_product.variants.size | json }});
+                    </script>
+
+                    {%- comment -%} Render Size Swatches {%- endcomment -%}
+                    <div class="product-card__swatch-overlay">
+                        <ul class="product-card__swatch__items">
+                            {%- assign values = '' -%}
+                            {%- assign swatch_count = 0 -%}
+                            {%- assign rendered_count = 0 -%}
+                            
+                            {%- for variant in current_product.variants -%}
+                                {%- assign value = variant.options[size_option_index] -%}
+                                {%- assign value_stripped = value | strip -%}
+                                
+                                {%- unless value_stripped == blank -%}
+                                {%- capture wrapped_value -%},{{ value_stripped }},{%- endcapture -%}
+                                {%- unless values contains wrapped_value -%}
+                                    {%- assign swatch_count = swatch_count | plus: 1 -%}
+                                    {%- assign swatch_variant_ids = swatch_variant_ids | append: variant.id | append: ',' -%}
+                                    
+                                    {%- if swatch_count <= 6 -%}
+                                    {%- assign rendered_count = rendered_count | plus: 1 -%}
+                                    {%- assign is_active = false -%}
+                                    {%- if current_variant and current_variant.options[size_option_index] == value_stripped -%}
+                                        {%- assign is_active = true -%}
+                                    {%- endif -%}
+                                    
+                                    <li class="product-card__swatch__item o-list-inline__item" data-variant-id="{{ variant.id }}">
+                                        <div
+                                        class="product-card__swatch__graphic js-variant-swatch {%- if is_active %} active{% endif %}"
+                                        data-variant-id="{{ variant.id }}"
+                                        data-option-value="{{ value_stripped | escape }}"
+                                        title="{{ value_stripped | escape }}"
+                                        >
+                                        {%- liquid
+                                            assign display_value = value_stripped
+                                            if display_value.size > 4
+                                            assign display_value = display_value | slice: 0, 3 | append: '.'
+                                            elsif display_value.size > 2
+                                            assign display_value = display_value
+                                            else
+                                            assign display_value = display_value
+                                            endif
+                                        -%}
+                                        {{ display_value }}
+                                        </div>
+                                    </li>
+                                    {%- endif -%}
+                                    
+                                    {%- capture values -%}{{ values }}{{ wrapped_value }}{%- endcapture -%}
+                                {%- endunless -%}
+                                {%- endunless -%}
+                            {%- endfor -%}
+                        </ul>
+
+                        {%- comment -%} Overflow Indicator {%- endcomment -%}
+                        {%- if swatch_count > 6 -%}
+                        <a
+                            href="{{ current_product.url | within: collection }}"
+                            class="product-card__overflow__item"
+                            title="{{ current_product.title }} - {{ swatch_count | minus: 6 }} more sizes"
+                            aria-label="{{ swatch_count | minus: 6 }} more sizes available"
+                        >
+                            <span>+{{ swatch_count | minus: 6 }}</span>
+                        </a>
+                        {%- endif -%}
+                    </div>
+                    <script>
+                        (function() {
+                        'use strict';
+                        
+                        function initProductSwatches() {
+                            const swatches = document.querySelectorAll('.js-variant-swatch');
+                            console.log('Found', swatches.length, 'size swatches for {{ current_product.title | escape }}');
+                            
+                            if (swatches.length === 0) {
+                            console.log('No swatches found - skipping initialization');
+                            return;
+                            }
+                            
+                            swatches.forEach(function(swatch, index) {
+                            const variantId = swatch.getAttribute('data-variant-id');
+                            const optionValue = swatch.getAttribute('data-option-value');
+                            const isActive = swatch.classList.contains('active');
+                            
+                            console.log(`Swatch ${index + 1}:`, {
+                                variantId: variantId,
+                                size: optionValue,
+                                active: isActive
+                            });
+                            
+                            // Remove existing listeners to prevent duplicates
+                            const newSwatch = swatch.cloneNode(true);
+                            swatch.parentNode.replaceChild(newSwatch, swatch);
+                            
+                            newSwatch.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                
+                                console.log('Size swatch clicked:', optionValue, 'Variant:', variantId);
+                                
+                                // Remove active class from all swatches
+                                swatches.forEach(function(s) { 
+                                s.classList.remove('active'); 
+                                });
+                                
+                                // Add active class to clicked swatch
+                                this.classList.add('active');
+                                
+                                // Update product form variant (Dawn theme compatibility)
+                                const productForm = document.querySelector(`[data-product-id="{{ current_product.id }}"] form`);
+                                if (productForm) {
+                                const variantInput = productForm.querySelector('select[name="id"], input[name="id"]');
+                                if (variantInput) {
+                                    variantInput.value = variantId;
+                                    variantInput.dispatchEvent(new Event('change', { bubbles: true }));
+                                    console.log('Updated form variant input');
+                                }
+                                }
+                                
+                                // Trigger custom events for theme JavaScript
+                                const productCard = this.closest('.product-card');
+                                if (productCard) {
+                                productCard.dispatchEvent(new CustomEvent('variant:change', {
+                                    detail: { variantId: variantId, optionValue: optionValue },
+                                    bubbles: true
+                                }));
+                                }
+                                
+                                // Global variant change event
+                                document.dispatchEvent(new CustomEvent('variant:change', {
+                                detail: { 
+                                    productId: {{ current_product.id }}, 
+                                    variantId: variantId, 
+                                    optionValue: optionValue 
+                                },
+                                bubbles: true
+                                }));
+                                
+                                console.log('All events dispatched successfully');
+                            });
+                            });
+                        }
+                        
+                        // Initialize immediately and after a short delay
+                        setTimeout(initProductSwatches, 50);
+                        
+                        // Also initialize on DOM ready
+                        if (document.readyState === 'loading') {
+                            document.addEventListener('DOMContentLoaded', initProductSwatches);
+                        } else {
+                            initProductSwatches();
+                        }
+                        
+                        // Re-initialize after potential dynamic content loading
+                        setTimeout(initProductSwatches, 500);
+                        })();
+                    </script>
+                  {%- endif -%}
           </div>
         </a>
       </div>
@@ -429,97 +719,6 @@
           </product-card-reviews>
         {%- endif -%}
       </a>
-
-      {%- if swatches_enabled -%}
-        <product-card-variant-swatches>
-          {%- if current_product -%}
-            {%- liquid
-              assign triggers_raw = settings.swatches_trigger | newline_to_br | strip_newlines | split: '<br />'
-              assign triggers = '' | split: ','
-              for trigger in triggers_raw
-                assign t = trigger | strip | downcase | split: ','
-                assign triggers = triggers | concat: t
-              endfor
-
-              assign swatch_count = 0
-              assign swatch_used = false
-
-              assign swatch_variant_ids = ''
-            -%}
-
-            {%- for option in current_product.options -%}
-              {%- liquid
-                assign option_name = option | strip | downcase
-                assign option_index = forloop.index0
-              -%}
-
-              {%- if triggers contains option_name and swatch_used == false -%}
-                {%- assign swatch_used = true -%}
-
-                <div class="swatch-wrapper">
-                  <div class="product-card__swatch">
-                    <ul class="product-card__swatch__items o-list-inline">
-                      {%- assign values = '' -%}
-                      {%- for variant in current_product.variants -%}
-                        {%- assign value = variant.options[option_index] -%}
-
-                        {%- capture wrapped_value -%},{{ value }},{%- endcapture -%}
-
-                        {%- unless values contains wrapped_value -%}
-                          {%- liquid
-                            assign swatch_id = value | strip | downcase | handle
-                            assign default_color = value | handle | replace: '-', ''
-                            assign swatch_count = swatch_count | plus: 1
-                            assign swatch_variant_ids = swatch_variant_ids | append: variant.id | append: ','
-                          -%}
-
-                          {%- if swatch_count <= 5 -%}
-                            <li
-                              class="
-                                product-card__swatch__item
-                                product-card__swatch__item--{% if settings.use_square_swatch %}square{% else %}circle{% endif %}
-                                product-card__swatch__item-space-{{ settings.product_grid_swatch_size }}
-                                o-list-inline__item
-                              "
-                              variant-id="{{ variant.id }}"
-                            >
-                              <variant-swatch
-                                swatch-id="{{ swatch_id }}"
-                                class="
-                                  product-card__swatch__graphic
-                                  {% if settings.use_emphasized_borders %} product-card__swatch__graphic--emphasize{% endif %}
-                                  product-card__swatch__graphic--{{ settings.product_grid_swatch_size }}
-                                "
-                                style="--background-graphic: {{ default_color }}"
-                                aria-label="{{ value | replace: '"', '' }}"
-                              />
-                            </li>
-                          {%- endif -%}
-
-                          {%- capture values -%}{{ values }}{{ wrapped_value }}{%- endcapture -%}
-                        {%- endunless -%}
-                      {%- endfor -%}
-                    </ul>
-
-                    {%- if swatch_count > 5 -%}
-                      <div class="product-card__overflow">
-                        <a
-                          product-card-link
-                          href="{{ current_product.url | within: collection }}"
-                          class="product-card__overflow__item"
-                          title="{{ current_product.title }}"
-                        >
-                          <span class="">+{{ swatch_count | minus: 5 }}</span>
-                        </a>
-                      </div>
-                    {%- endif -%}
-                  </div>
-                </div>
-              {%- endif -%}
-            {%- endfor -%}
-          {%- endif -%}
-        </product-card-variant-swatches>
-      {%- endif -%}
     </div>
   </div>
   {%- if render_quickshop -%}

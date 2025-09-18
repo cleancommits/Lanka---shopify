@@ -456,24 +456,18 @@
 
                                           <details-content class="collection-sidebar__filter__accordion">
                                             <style>
-                                              .size-filters .size-group {
+                                              .size-filters .size-section {
                                                 margin-bottom: 1.5rem;
                                               }
-                                              .size-group-title {
-                                                font-weight: 600;
-                                                margin: 1rem 0 0.5rem 0;
-                                                font-size: 0.875rem;
-                                                color: var(--color-foreground);
-                                                text-transform: uppercase;
-                                                letter-spacing: 0.05em;
-                                                border-bottom: 1px solid var(--color-border);
-                                                padding-bottom: 0.25rem;
+                                              .size-section:not(:last-child) {
+                                                border-bottom: 1px solid var(--color-border, #e0e0e0);
+                                                padding-bottom: 1rem;
                                               }
                                               .size-grid {
                                                 display: grid;
                                                 grid-template-columns: repeat(3, 1fr);
                                                 gap: 0.75rem;
-                                                margin-bottom: 1rem;
+                                                margin-bottom: 0;
                                               }
                                               .collection-sidebar__item {
                                                 display: flex;
@@ -485,36 +479,27 @@
                                                 display: flex;
                                                 align-items: center;
                                                 width: 100%;
-                                                padding: 0.25rem;
-                                                border-radius: var(--border-radius);
+                                                padding: 0; !important
+                                                border-radius: var(--border-radius, 4px);
                                                 transition: background-color 0.2s ease;
                                               }
                                               .collection-sidebar__link:hover {
-                                                background-color: var(--color-background-hover);
+                                                background-color: var(--color-background-hover, #f9f9f9);
                                               }
                                               .collection-sidebar__link__box {
                                                 margin-right: 0.5rem;
                                                 flex-shrink: 0;
-                                              }
-                                              .collection-sidebar__link__count {
-                                                margin-left: auto;
-                                                font-size: 0.75rem;
-                                                color: var(--color-foreground-50);
                                               }
                                               @media screen and (max-width: 749px) {
                                                 .size-grid {
                                                   grid-template-columns: repeat(2, 1fr);
                                                   gap: 0.5rem;
                                                 }
-                                                .size-group-title {
-                                                  font-size: 0.75rem;
-                                                }
                                               }
                                             </style>
                                             <div class="collection-sidebar__items size-filters">
-                                              <!-- Group 1: Clothing Sizes (Apparel) -->
-                                              <div class="size-group">
-                                                <h4 class="size-group-title">Clothing Sizes (Apparel)</h4>
+                                              <!-- Section 1: Clothing Sizes Grid -->
+                                              <div class="size-section">
                                                 <div class="size-grid">
                                                   {%- for filter_value in filter.values -%}
                                                     {%- assign label = filter_value.label | strip | downcase -%}
@@ -538,9 +523,6 @@
                                                             <i class="icon icon--tick" aria-hidden="true"></i>
                                                           </span>
                                                           {{ filter_value.label | escape }}
-                                                          {% if block.settings.count %}
-                                                            <span class="collection-sidebar__link__count">{{ filter_value.count }}</span>
-                                                          {% endif %}
                                                         </label>
                                                       </div>
                                                     {%- endif -%}
@@ -548,9 +530,8 @@
                                                 </div>
                                               </div>
 
-                                              <!-- Group 2: Waist Sizes (Bottoms / Pants / Jeans) -->
-                                              <div class="size-group">
-                                                <h4 class="size-group-title">Waist Sizes (Bottoms / Pants / Jeans)</h4>
+                                              <!-- Section 2: Waist Sizes Grid -->
+                                              <div class="size-section">
                                                 <div class="size-grid">
                                                   {%- for filter_value in filter.values -%}
                                                     {%- assign label = filter_value.label | strip | downcase -%}
@@ -574,9 +555,6 @@
                                                             <i class="icon icon--tick" aria-hidden="true"></i>
                                                           </span>
                                                           {{ filter_value.label | escape }}
-                                                          {% if block.settings.count %}
-                                                            <span class="collection-sidebar__link__count">{{ filter_value.count }}</span>
-                                                          {% endif %}
                                                         </label>
                                                       </div>
                                                     {%- endif -%}
@@ -584,9 +562,8 @@
                                                 </div>
                                               </div>
 
-                                              <!-- Group 3: Footwear Sizes (Shoes) -->
-                                              <div class="size-group">
-                                                <h4 class="size-group-title">Footwear Sizes (Shoes)</h4>
+                                              <!-- Section 3: Footwear Sizes Grid -->
+                                              <div class="size-section">
                                                 <div class="size-grid">
                                                   {%- for filter_value in filter.values -%}
                                                     {%- assign label = filter_value.label | strip | downcase -%}
@@ -610,9 +587,6 @@
                                                             <i class="icon icon--tick" aria-hidden="true"></i>
                                                           </span>
                                                           {{ filter_value.label | escape }}
-                                                          {% if block.settings.count %}
-                                                            <span class="collection-sidebar__link__count">{{ filter_value.count }}</span>
-                                                          {% endif %}
                                                         </label>
                                                       </div>
                                                     {%- endif -%}
