@@ -282,20 +282,20 @@
                     }
                     .product-card__swatch-overlay {
                     position: absolute;
-                    bottom: 12px;
-                    left: 50%;
-                    transform: translateX(-50%);
+                    bottom: 0;
+                    left: 0;
+                    width: 100%;
+                    margin: 0;
                     background: rgba(255, 255, 255, 0.95);
                     backdrop-filter: blur(10px);
-                    border-radius: 25px;
-                    padding: 8px 16px;
+                    border-radius: 0;
+                    padding: 4px 4px;
                     opacity: 0;
                     visibility: hidden;
                     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                     z-index: 15;
                     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
                     border: 1px solid rgba(255, 255, 255, 0.2);
-                    min-width: 140px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
@@ -304,7 +304,7 @@
                     .product-card__media--hover .product-card__swatch-overlay {
                     opacity: 1;
                     visibility: visible;
-                    transform: translateX(-50%) translateY(-2px);
+                    transform: translateY(-2px);
                     }
                     .product-card__swatch__items {
                     margin: 0;
@@ -313,8 +313,15 @@
                     display: flex;
                     justify-content: center;
                     align-items: center;
-                    gap: 6px;
-                    flex-wrap: wrap;
+                    gap: 4px;
+                    flex-wrap: nowrap;
+                    overflow-x: auto;
+                    -webkit-overflow-scrolling: touch;
+                    scrollbar-width: none;
+                    -ms-overflow-style: none;
+                    }
+                    .product-card__swatch__items::-webkit-scrollbar {
+                    display: none;
                     }
                     .product-card__swatch__item {
                     margin: 0;
@@ -338,9 +345,10 @@
                     transition: all 0.2s ease;
                     position: relative;
                     overflow: hidden;
+                    white-space: nowrap;
                     }
                     .product-card__swatch__graphic:hover {
-                    transform: scale(1.1);
+                    transform: scale(1.05);
                     border-color: #666666;
                     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
                     background: #f8f8f8;
@@ -352,7 +360,7 @@
                     }
                     .product-card__overflow__item {
                     position: absolute;
-                    right: -12px;
+                    right: 12px;
                     top: 50%;
                     transform: translateY(-50%);
                     background: rgba(0, 0, 0, 0.8);
@@ -374,22 +382,43 @@
                     background: rgba(0, 0, 0, 1);
                     transform: translateY(-50%) scale(1.1);
                     }
+                    .product-card__btn-overlay {
+                    position: absolute;
+                    bottom: 80px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    width: calc(100% - 24px);
+                    max-width: 200px;
+                    z-index: 16;
+                    opacity: 0;
+                    visibility: hidden;
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    }
+                    .product-card__media:hover .product-card__btn-overlay,
+                    .product-card__media--hover .product-card__btn-overlay {
+                    opacity: 1;
+                    visibility: visible;
+                    transform: translateX(-50%) translateY(-4px);
+                    }
                     @media (max-width: 749px) {
                     .product-card__swatch-overlay {
-                        bottom: 8px;
-                        padding: 6px 12px;
-                        min-width: 120px;
+                        bottom: 0;
+                        padding: 6px 8px;
                     }
                     .product-card__swatch__graphic {
-                        width: 24px;
-                        height: 24px;
+                        width: 28px;
+                        height: 28px;
                         font-size: 10px;
                     }
                     .product-card__overflow__item {
                         width: 24px;
                         height: 24px;
-                        right: -10px;
+                        right: 8px;
                         font-size: 11px;
+                    }
+                    .product-card__btn-overlay {
+                        bottom: 72px;
+                        max-width: 160px;
                     }
                 }
                 </style>
@@ -480,95 +509,99 @@
                     </div>
                     <script>
                         (function() {
-                        'use strict';
-                        
-                        function initProductSwatches() {
-                            const swatches = document.querySelectorAll('.js-variant-swatch');
-                            console.log('Found', swatches.length, 'size swatches for {{ current_product.title | escape }}');
+                            'use strict';
                             
-                            if (swatches.length === 0) {
-                            console.log('No swatches found - skipping initialization');
-                            return;
+                            function initProductSwatches() {
+                                const swatches = document.querySelectorAll('.js-variant-swatch');
+                                console.log('Found', swatches.length, 'size swatches for {{ current_product.title | escape }}');
+                                
+                                if (swatches.length === 0) {
+                                    console.log('No swatches found - skipping initialization');
+                                    return;
+                                }
+                                
+                                swatches.forEach(function(swatch, index) {
+                                    const variantId = swatch.getAttribute('data-variant-id');
+                                    const optionValue = swatch.getAttribute('data-option-value');
+                                    const isActive = swatch.classList.contains('active');
+                                    
+                                    console.log(`Swatch ${index + 1}:`, {
+                                        variantId: variantId,
+                                        size: optionValue,
+                                        active: isActive
+                                    });
+                                    
+                                    // Remove existing listeners to prevent duplicates
+                                    const newSwatch = swatch.cloneNode(true);
+                                    swatch.parentNode.replaceChild(newSwatch, swatch);
+                                    
+                                    newSwatch.addEventListener('click', function(e) {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        
+                                        console.log('Size swatch clicked:', optionValue, 'Variant:', variantId);
+                                        
+                                        // Remove active class from all swatches
+                                        swatches.forEach(function(s) { 
+                                            s.classList.remove('active'); 
+                                        });
+                                        
+                                        // Add active class to clicked swatch
+                                        this.classList.add('active');
+                                        
+                                        // Update product form variant (Dawn theme compatibility)
+                                        const productForm = document.querySelector(`[data-product-id="{{ current_product.id }}"] form`);
+                                        if (productForm) {
+                                            const variantInput = productForm.querySelector('select[name="id"], input[name="id"]');
+                                            if (variantInput) {
+                                                variantInput.value = variantId;
+                                                variantInput.dispatchEvent(new Event('change', { bubbles: true }));
+                                                console.log('Updated form variant input');
+                                            }
+                                        }
+                                        
+                                        // Trigger custom events for theme JavaScript
+                                        const productCard = this.closest('.product-card');
+                                        if (productCard) {
+                                            productCard.dispatchEvent(new CustomEvent('variant:change', {
+                                                detail: { variantId: variantId, optionValue: optionValue },
+                                                bubbles: true
+                                            }));
+                                        }
+                                        
+                                        // Global variant change event
+                                        document.dispatchEvent(new CustomEvent('variant:change', {
+                                            detail: { 
+                                                productId: {{ current_product.id }}, 
+                                                variantId: variantId, 
+                                                optionValue: optionValue 
+                                            },
+                                            bubbles: true
+                                        }));
+                                        
+                                        console.log('All events dispatched successfully');
+                                    });
+                                });
                             }
                             
-                            swatches.forEach(function(swatch, index) {
-                            const variantId = swatch.getAttribute('data-variant-id');
-                            const optionValue = swatch.getAttribute('data-option-value');
-                            const isActive = swatch.classList.contains('active');
+                            // Initialize immediately and after a short delay
+                            setTimeout(initProductSwatches, 50);
                             
-                            console.log(`Swatch ${index + 1}:`, {
-                                variantId: variantId,
-                                size: optionValue,
-                                active: isActive
-                            });
+                            // Also initialize on DOM ready
+                            if (document.readyState === 'loading') {
+                                document.addEventListener('DOMContentLoaded', initProductSwatches);
+                            } else {
+                                initProductSwatches();
+                            }
                             
-                            // Remove existing listeners to prevent duplicates
-                            const newSwatch = swatch.cloneNode(true);
-                            swatch.parentNode.replaceChild(newSwatch, swatch);
+                            // Re-initialize after potential dynamic content loading
+                            setTimeout(initProductSwatches, 500);
                             
-                            newSwatch.addEventListener('click', function(e) {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                
-                                console.log('Size swatch clicked:', optionValue, 'Variant:', variantId);
-                                
-                                // Remove active class from all swatches
-                                swatches.forEach(function(s) { 
-                                s.classList.remove('active'); 
-                                });
-                                
-                                // Add active class to clicked swatch
-                                this.classList.add('active');
-                                
-                                // Update product form variant (Dawn theme compatibility)
-                                const productForm = document.querySelector(`[data-product-id="{{ current_product.id }}"] form`);
-                                if (productForm) {
-                                const variantInput = productForm.querySelector('select[name="id"], input[name="id"]');
-                                if (variantInput) {
-                                    variantInput.value = variantId;
-                                    variantInput.dispatchEvent(new Event('change', { bubbles: true }));
-                                    console.log('Updated form variant input');
-                                }
-                                }
-                                
-                                // Trigger custom events for theme JavaScript
-                                const productCard = this.closest('.product-card');
-                                if (productCard) {
-                                productCard.dispatchEvent(new CustomEvent('variant:change', {
-                                    detail: { variantId: variantId, optionValue: optionValue },
-                                    bubbles: true
-                                }));
-                                }
-                                
-                                // Global variant change event
-                                document.dispatchEvent(new CustomEvent('variant:change', {
-                                detail: { 
-                                    productId: {{ current_product.id }}, 
-                                    variantId: variantId, 
-                                    optionValue: optionValue 
-                                },
-                                bubbles: true
-                                }));
-                                
-                                console.log('All events dispatched successfully');
-                            });
-                            });
-                        }
-                        
-                        // Initialize immediately and after a short delay
-                        setTimeout(initProductSwatches, 50);
-                        
-                        // Also initialize on DOM ready
-                        if (document.readyState === 'loading') {
-                            document.addEventListener('DOMContentLoaded', initProductSwatches);
-                        } else {
-                            initProductSwatches();
-                        }
-                        
-                        // Re-initialize after potential dynamic content loading
-                        setTimeout(initProductSwatches, 500);
+                            // Handle dynamic content loading (for AJAX-loaded products)
+                            document.addEventListener('shopify:section:load', initProductSwatches);
+                            document.addEventListener('shopify:block:load', initProductSwatches);
                         })();
-                    </script>
+                        </script>
                   {%- endif -%}
           </div>
         </a>
