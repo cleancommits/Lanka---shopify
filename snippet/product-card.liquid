@@ -275,6 +275,10 @@
               render_skeleton: true
             %}
 
+            {%- if current_product and current_product.available == false -%}
+              <div class="product-card__out-of-stock-line"></div>
+            {%- endif -%}
+
             {%- if current_product and current_product.variants.size > 1 -%}
                 <style>
                     .product-card__media--swatch-overlay {
@@ -328,17 +332,17 @@
                     flex-shrink: 0;
                     }
                     .product-card__swatch__graphic {
-                    width: 28px;
-                    height: 28px;
+                    width: 32px;
+                    height: 32px;
                     background: #ffffff;
-                    border: 2px solid #e0e0e0;
-                    border-radius: 6px;
+                    border: 2px solid #000000;
+                    border-radius: 2px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    font-size: 11px;
+                    font-size: 14px;
                     font-weight: 600;
-                    color: #333333;
+                    color: #000000;
                     text-align: center;
                     line-height: 1.2;
                     cursor: pointer;
@@ -352,11 +356,34 @@
                     border-color: #666666;
                     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
                     background: #f8f8f8;
-                    z-index: 5;
                     }
                     .product-card__swatch__graphic.active {
                     border-color: #000000;
                     background: #f0f0f0;
+                    }
+                    .product-card__swatch__graphic.disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                    }
+                    .product-card__swatch__graphic.disabled::after {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(to bottom right, transparent 49%, #ff0000 50%, #ff0000 51%, transparent 52%);
+                    pointer-events: none;
+                    }
+                    .product-card__out-of-stock-line {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(to bottom right, transparent 49%, #ff0000 50%, #ff0000 51%, transparent 52%);
+                    pointer-events: none;
+                    z-index: 10;
                     }
                     .product-card__overflow__item {
                     position: absolute;
@@ -406,9 +433,9 @@
                         padding: 6px 8px;
                     }
                     .product-card__swatch__graphic {
-                        width: 28px;
-                        height: 28px;
-                        font-size: 10px;
+                        width: 32px;
+                        height: 32px;
+                        font-size: 12px;
                     }
                     .product-card__overflow__item {
                         width: 24px;
@@ -419,6 +446,12 @@
                     .product-card__btn-overlay {
                         bottom: 72px;
                         max-width: 160px;
+                    }
+                    .product-card__swatch__graphic.disabled::after {
+                        background: linear-gradient(to bottom right, transparent 48%, #ff0000 49%, #ff0000 51%, transparent 52%);
+                    }
+                    .product-card__out-of-stock-line {
+                        background: linear-gradient(to bottom right, transparent 48%, #ff0000 49%, #ff0000 51%, transparent 52%);
                     }
                 }
                 </style>
@@ -463,28 +496,20 @@
                                     {%- if swatch_count <= 6 -%}
                                     {%- assign rendered_count = rendered_count | plus: 1 -%}
                                     {%- assign is_active = false -%}
+                                    {%- assign is_disabled = variant.available | not -%}
                                     {%- if current_variant and current_variant.options[size_option_index] == value_stripped -%}
                                         {%- assign is_active = true -%}
                                     {%- endif -%}
                                     
                                     <li class="product-card__swatch__item o-list-inline__item" data-variant-id="{{ variant.id }}">
                                         <div
-                                        class="product-card__swatch__graphic js-variant-swatch {%- if is_active %} active{% endif %}"
+                                        class="product-card__swatch__graphic js-variant-swatch {%- if is_active %} active{% endif %} {%- if is_disabled %} disabled{% endif %}"
                                         data-variant-id="{{ variant.id }}"
                                         data-option-value="{{ value_stripped | escape }}"
-                                        title="{{ value_stripped | escape }}"
+                                        title="{{ value_stripped | escape }}{% if is_disabled %} - Out of Stock{% endif %}"
+                                        {% if is_disabled %}aria-disabled="true"{% endif %}
                                         >
-                                        {%- liquid
-                                            assign display_value = value_stripped
-                                            if display_value.size > 4
-                                            assign display_value = display_value | slice: 0, 3 | append: '.'
-                                            elsif display_value.size > 2
-                                            assign display_value = display_value
-                                            else
-                                            assign display_value = display_value
-                                            endif
-                                        -%}
-                                        {{ display_value }}
+                                        {{ value_stripped }}
                                         </div>
                                     </li>
                                     {%- endif -%}
@@ -524,84 +549,75 @@
                                     const variantId = swatch.getAttribute('data-variant-id');
                                     const optionValue = swatch.getAttribute('data-option-value');
                                     const isActive = swatch.classList.contains('active');
+                                    const isDisabled = swatch.classList.contains('disabled');
                                     
                                     console.log(`Swatch ${index + 1}:`, {
                                         variantId: variantId,
                                         size: optionValue,
-                                        active: isActive
+                                        active: isActive,
+                                        disabled: isDisabled
                                     });
                                     
-                                    // Remove existing listeners to prevent duplicates
                                     const newSwatch = swatch.cloneNode(true);
                                     swatch.parentNode.replaceChild(newSwatch, swatch);
                                     
-                                    newSwatch.addEventListener('click', function(e) {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        
-                                        console.log('Size swatch clicked:', optionValue, 'Variant:', variantId);
-                                        
-                                        // Remove active class from all swatches
-                                        swatches.forEach(function(s) { 
-                                            s.classList.remove('active'); 
-                                        });
-                                        
-                                        // Add active class to clicked swatch
-                                        this.classList.add('active');
-                                        
-                                        // Update product form variant (Dawn theme compatibility)
-                                        const productForm = document.querySelector(`[data-product-id="{{ current_product.id }}"] form`);
-                                        if (productForm) {
-                                            const variantInput = productForm.querySelector('select[name="id"], input[name="id"]');
-                                            if (variantInput) {
-                                                variantInput.value = variantId;
-                                                variantInput.dispatchEvent(new Event('change', { bubbles: true }));
-                                                console.log('Updated form variant input');
+                                    if (!isDisabled) {
+                                        newSwatch.addEventListener('click', function(e) {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            
+                                            console.log('Size swatch clicked:', optionValue, 'Variant:', variantId);
+                                            
+                                            swatches.forEach(function(s) { 
+                                                s.classList.remove('active'); 
+                                            });
+                                            
+                                            this.classList.add('active');
+                                            
+                                            const productForm = document.querySelector(`[data-product-id="{{ current_product.id }}"] form`);
+                                            if (productForm) {
+                                                const variantInput = productForm.querySelector('select[name="id"], input[name="id"]');
+                                                if (variantInput) {
+                                                    variantInput.value = variantId;
+                                                    variantInput.dispatchEvent(new Event('change', { bubbles: true }));
+                                                    console.log('Updated form variant input');
+                                                }
                                             }
-                                        }
-                                        
-                                        // Trigger custom events for theme JavaScript
-                                        const productCard = this.closest('.product-card');
-                                        if (productCard) {
-                                            productCard.dispatchEvent(new CustomEvent('variant:change', {
-                                                detail: { variantId: variantId, optionValue: optionValue },
+                                            
+                                            const productCard = this.closest('.product-card');
+                                            if (productCard) {
+                                                productCard.dispatchEvent(new CustomEvent('variant:change', {
+                                                    detail: { variantId: variantId, optionValue: optionValue },
+                                                    bubbles: true
+                                                }));
+                                            }
+                                            
+                                            document.dispatchEvent(new CustomEvent('variant:change', {
+                                                detail: { 
+                                                    productId: {{ current_product.id }}, 
+                                                    variantId: variantId, 
+                                                    optionValue: optionValue 
+                                                },
                                                 bubbles: true
                                             }));
-                                        }
-                                        
-                                        // Global variant change event
-                                        document.dispatchEvent(new CustomEvent('variant:change', {
-                                            detail: { 
-                                                productId: {{ current_product.id }}, 
-                                                variantId: variantId, 
-                                                optionValue: optionValue 
-                                            },
-                                            bubbles: true
-                                        }));
-                                        
-                                        console.log('All events dispatched successfully');
-                                    });
+                                            
+                                            console.log('All events dispatched successfully');
+                                        });
+                                    }
                                 });
                             }
                             
-                            // Initialize immediately and after a short delay
                             setTimeout(initProductSwatches, 50);
-                            
-                            // Also initialize on DOM ready
                             if (document.readyState === 'loading') {
                                 document.addEventListener('DOMContentLoaded', initProductSwatches);
                             } else {
                                 initProductSwatches();
                             }
-                            
-                            // Re-initialize after potential dynamic content loading
                             setTimeout(initProductSwatches, 500);
-                            
-                            // Handle dynamic content loading (for AJAX-loaded products)
                             document.addEventListener('shopify:section:load', initProductSwatches);
                             document.addEventListener('shopify:block:load', initProductSwatches);
                         })();
-                        </script>
+                    </script>
                   {%- endif -%}
           </div>
         </a>
