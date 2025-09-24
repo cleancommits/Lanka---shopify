@@ -15,8 +15,15 @@
   if settings.currency_codes_on_totals_enabled
     assign total_cart_price = current_cart.total_price | money_with_currency
   endif
+
+  assign cart_total = current_cart.total_price
+  assign free_shipping_threshold = settings.cart_free_shipping_threshold | times: 100
+  assign free_shipping_reached = false
+  if cart_total >= free_shipping_threshold
+    assign free_shipping_reached = true
+  endif
 -%}
-<div class="cart__controls">
+<div class="cart__controls" data-free-shipping-threshold="{{ free_shipping_threshold | default: 0 }}">
   <div class="cart__details">
     {%- if show_heading -%}
       <div class="cart__label">
@@ -57,7 +64,7 @@
         </p>
       {%- endunless -%}
 
-      <p class="cart__message">
+      <p class="cart__message" {% if free_shipping_reached %}style="display: none;"{% endif %}>
         {%- if cart.taxes_included and shop.shipping_policy.body != blank -%}
           {{ 'cart.general.taxes_included_and_shipping_policy_html' | t: link: shop.shipping_policy.url }}
         {%- elsif cart.taxes_included -%}
@@ -157,3 +164,41 @@
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Debugging: Check if cart__controls exists
+    const cartControls = document.querySelector('.cart__controls');
+    const freeShippingThreshold = parseInt(cartControls?.dataset.freeShippingThreshold) || 0;
+
+    function updateCartMessage() {
+      fetch('/cart.js')
+        .then(response => response.json())
+        .then(cart => {
+          const cartTotal = cart.total_price;
+          const reached = cartTotal >= 9000;
+          const message = document.querySelector('.cart__message');
+          if (message) {
+            message.style.display = reached ? 'none' : 'block';
+          } else {
+            console.warn('cart__message element not found');
+          }
+        })
+        .catch(error => console.error('Error fetching cart:', error));
+    }
+
+    // Initial call
+    updateCartMessage();
+
+    // Observe for cart changes
+    const observer = new PerformanceObserver((list) => {
+      list.getEntries().forEach((entry) => {
+        if (['xmlhttprequest', 'fetch'].includes(entry.initiatorType) && /\/cart\//.test(entry.name)) {
+          console.log('Cart update detected:', entry.name);
+          setTimeout(updateCartMessage, 300); // Small delay to ensure cart is updated
+        }
+      });
+    });
+    observer.observe({ entryTypes: ['resource'] });
+  });
+</script>

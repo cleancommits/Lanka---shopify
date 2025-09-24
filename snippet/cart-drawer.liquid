@@ -21,6 +21,8 @@
   if settings.cart_gift_wrapping_product
     assign gift_wrapping_product_id = settings.cart_gift_wrapping_product.variants.first.id
   endif
+
+  assign free_shipping_threshold = settings.cart_free_shipping_threshold | times: 100
 -%}
 {%- capture cart_item_image_sizes -%}
   (min-width: 504px) {{ 405 | times: cart_item_image_size_multiplyer | round }}px,
@@ -113,6 +115,7 @@
   drawer
   note-inside-accordion
   height-control="360"
+  data-free-shipping-threshold="{{ free_shipping_threshold | default: 0 }}"
 >
   {%- if cart.item_count > 0 -%}
     {%- liquid
