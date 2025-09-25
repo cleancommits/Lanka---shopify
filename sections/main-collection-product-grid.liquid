@@ -21,6 +21,15 @@
   }
 </style>
 <script>
+  // Debounce utility to prevent excessive function calls
+  function debounce(func, wait) {
+    let timeout;
+    return function (...args) {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+  }
+
   function updateSidebarOffset() {
     try {
       const actionsBar = document.querySelector(".collection-main__actions");
@@ -41,7 +50,6 @@
   }
 
   function adjustDrawActionsPosition() {
-
     const drawActions = document.querySelector(".collection-sidebar__draw-actions");
     const chatButton = document.querySelector("#chat-button");
     const sidebar = document.querySelector(".collection-sidebar.js-collection-draw");
@@ -62,7 +70,6 @@
     };
 
     if (document.fonts) {
-      // Wait for web fonts to load before measuring
       document.fonts.ready.then(() => {
         requestAnimationFrame(applyPadding);
       });
@@ -71,44 +78,48 @@
     }
   }
 
+  // Debounced version of adjustDrawActionsPosition
+  const debouncedAdjustDrawActions = debounce(adjustDrawActionsPosition, 100);
+
   // Run once on load
   window.addEventListener("load", () => {
     updateSidebarOffset();
-    adjustDrawActionsPosition();
+    debouncedAdjustDrawActions();
   });
+
+  // Run periodically to catch late-loaded chat buttons or filter updates
+  setInterval(debouncedAdjustDrawActions, 1000);
 
   // Re-run on filter button click
   document.addEventListener("click", (event) => {
     if (event.target.closest(".collection-main__filter-btn.js-collection-draw-trigger")) {
       console.log("Filter button clicked → adjustDrawActionsPosition");
-      adjustDrawActionsPosition();
+      debouncedAdjustDrawActions();
     }
   });
 
-  // Re-run on resize and Shopify section events
+  // Re-run on Shopify-specific events
   [
     "resize",
     "shopify:section:load",
     "shopify:section:unload",
     "shopify:section:select",
     "shopify:section:deselect",
+    "shopify:filter:updated" // Added for filter AJAX updates
   ].forEach((evt) => {
-    window.addEventListener(evt, () => {
-      updateSidebarOffset();
-      adjustDrawActionsPosition();
-    });
+    window.addEventListener(evt, debouncedAdjustDrawActions);
   });
 
-  // Optional: Watch for sidebar visibility changes
+  // Watch for sidebar content changes
   const sidebar = document.querySelector(".collection-sidebar.js-collection-draw");
   if (sidebar) {
-    const observer = new MutationObserver(() => {
-      const visible = window.getComputedStyle(sidebar).display !== "none";
-      if (visible) {
-        adjustDrawActionsPosition();
-      }
+    const observer = new MutationObserver(debouncedAdjustDrawActions);
+    observer.observe(sidebar, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["style", "class"]
     });
-    observer.observe(sidebar, { attributes: true, attributeFilter: ["style", "class"] });
   }
 </script>
 
