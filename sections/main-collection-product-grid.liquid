@@ -21,67 +21,97 @@
   }
 </style>
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    function updateSidebarOffset() {
+  function updateSidebarOffset() {
+    try {
       const actionsBar = document.querySelector(".collection-main__actions");
-      const sidebar = document.querySelector(".o-layout__item.u-1\\/1.u-1\\/4-sidebar-desk.u-1\\/5-sidebar-wide");
+      const sidebar = document.querySelector(
+        ".o-layout__item.u-1\\/1.u-1\\/4-sidebar-desk.u-1\\/5-sidebar-wide"
+      );
 
       if (actionsBar && sidebar) {
         const actionsHeight = actionsBar.offsetHeight;
-        const header = document.querySelector("header") || null;
+        const header = document.querySelector("header");
         const headerHeight = header ? header.offsetHeight : 0;
-
         const totalOffset = headerHeight + actionsHeight;
-        sidebar.style.top = totalOffset + "px";
+        sidebar.style.top = `${totalOffset}px`;
       }
+    } catch (error) {
+      console.error("Error in updateSidebarOffset:", error);
+    }
+  }
+
+  function adjustDrawActionsPosition() {
+
+    const drawActions = document.querySelector(".collection-sidebar__draw-actions");
+    const chatButton = document.querySelector("#chat-button");
+    const sidebar = document.querySelector(".collection-sidebar.js-collection-draw");
+
+    if (!drawActions || !chatButton || !sidebar) {
+      console.log("Required elements not found, skipping.");
+      return;
     }
 
-    function adjustDrawActionsPosition() {
-      console.log("adjustDrawActionsPosition called, DOM loaded:", document.readyState);
+    const applyPadding = () => {
+      const rect = chatButton.getBoundingClientRect();
+      if (rect.height > 0) {
+        drawActions.style.paddingBottom = `${rect.height + 20}px`;
+      } else {
+        console.warn("Chat button height is 0, retrying...");
+        requestAnimationFrame(applyPadding);
+      }
+    };
 
-      const checkElements = setInterval(() => {
-        const drawActions = document.querySelector(".collection-sidebar__draw-actions");
-        const chatButton = document.querySelector("#chat-button");
-        const sidebar = document.querySelector(".collection-sidebar.js-collection-draw");
-
-        // Check if sidebar is visible (e.g., drawer is open)
-        const isSidebarVisible = sidebar && sidebar.classList.contains("mfp-ready"); // Adjust class based on your drawer plugin
-        if (drawActions && chatButton) {
-          const chatButtonHeight = chatButton.offsetHeight;
-          if (chatButtonHeight > 0) {
-            drawActions.style.paddingBottom = `${chatButtonHeight + 20}px`; // Add extra 10px for spacing
-            clearInterval(checkElements); // Stop polling once adjustment is made
-            console.log("Padding applied to drawActions");
-          }
-        }
-      }, 100); // Check every 100ms
-
-      // Stop polling after 5 seconds to avoid infinite loops
-      setTimeout(() => {
-        clearInterval(checkElements);
-        console.log("Stopped polling for drawActions and chatButton");
-      }, 5000);
+    if (document.fonts) {
+      // Wait for web fonts to load before measuring
+      document.fonts.ready.then(() => {
+        requestAnimationFrame(applyPadding);
+      });
+    } else {
+      requestAnimationFrame(applyPadding);
     }
+  }
 
-    // Run when filter drawer is opened (listen for click on filter button)
-    document.addEventListener("click", (event) => {
-      if (event.target.closest(".collection-main__filter-btn.js-collection-draw-trigger")) {
-        console.log("Filter button clicked, running adjustDrawActionsPosition");
+  // Run once on load
+  window.addEventListener("load", () => {
+    updateSidebarOffset();
+    adjustDrawActionsPosition();
+  });
+
+  // Re-run on filter button click
+  document.addEventListener("click", (event) => {
+    if (event.target.closest(".collection-main__filter-btn.js-collection-draw-trigger")) {
+      console.log("Filter button clicked → adjustDrawActionsPosition");
+      adjustDrawActionsPosition();
+    }
+  });
+
+  // Re-run on resize and Shopify section events
+  [
+    "resize",
+    "shopify:section:load",
+    "shopify:section:unload",
+    "shopify:section:select",
+    "shopify:section:deselect",
+  ].forEach((evt) => {
+    window.addEventListener(evt, () => {
+      updateSidebarOffset();
+      adjustDrawActionsPosition();
+    });
+  });
+
+  // Optional: Watch for sidebar visibility changes
+  const sidebar = document.querySelector(".collection-sidebar.js-collection-draw");
+  if (sidebar) {
+    const observer = new MutationObserver(() => {
+      const visible = window.getComputedStyle(sidebar).display !== "none";
+      if (visible) {
         adjustDrawActionsPosition();
       }
-});
-
-    // Run on load + on resize
-    updateSidebarOffset();
-    window.addEventListener("resize", updateSidebarOffset);
-
-    // Run again when Shopify replaces collection/filters
-    document.addEventListener("shopify:section:load", updateSidebarOffset);
-    document.addEventListener("shopify:section:unload", updateSidebarOffset);
-    document.addEventListener("shopify:section:select", updateSidebarOffset);
-    document.addEventListener("shopify:section:deselect", updateSidebarOffset);
-  });
+    });
+    observer.observe(sidebar, { attributes: true, attributeFilter: ["style", "class"] });
+  }
 </script>
+
 {%- liquid
   assign sort_by = collection.sort_by | default: collection.default_sort_by
   assign limit = section.settings.grid | times: section.settings.rows
