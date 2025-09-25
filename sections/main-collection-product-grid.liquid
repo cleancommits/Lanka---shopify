@@ -36,6 +36,37 @@
       }
     }
 
+    function adjustDrawActionsPosition() {
+      console.log("adjustDrawActionsPosition called, DOM loaded:", document.readyState);
+
+      const checkElements = setInterval(() => {
+        const drawActions = document.querySelector(".collection-sidebar__draw-actions");
+        const chatButton = document.querySelector("#chat-button");
+        const sidebar = document.querySelector(".collection-sidebar.js-collection-draw");
+
+        console.log("isSidebarVisible", isSidebarVisible);
+        if (drawActions && chatButton) {
+          const chatButtonHeight = chatButton.offsetHeight;
+          if (chatButtonHeight > 0) {
+            drawActions.style.paddingBottom = `${chatButtonHeight + 20}px`; // Add extra 10px for spacing
+            clearInterval(checkElements); // Stop polling once adjustment is made
+            console.log("Padding applied to drawActions");
+          }
+        }
+      }, 100);
+
+      setTimeout(() => {
+        clearInterval(checkElements);
+      }, 5000);
+    }
+
+    document.addEventListener("click", (event) => {
+      if (event.target.closest(".collection-main__filter-btn.js-collection-draw-trigger")) {
+        console.log("Filter button clicked, running adjustDrawActionsPosition");
+        adjustDrawActionsPosition();
+      }
+    });
+
     // Run on load + on resize
     updateSidebarOffset();
     window.addEventListener("resize", updateSidebarOffset);
