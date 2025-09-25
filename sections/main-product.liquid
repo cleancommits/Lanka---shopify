@@ -1492,6 +1492,40 @@
   theme.setPdpHeight();
   new ResizeObserver(theme.setPdpHeight).observe(document.querySelector('.product-single__box'));
 </script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    function adjustChatPosition() {
+      const stickyBar = document.querySelector('.lbts-add-to-cart-bar.lbts-fixed');
+      const chatButton = document.querySelector('#chat-button');
+      if (chatButton) {
+        if (stickyBar && stickyBar.offsetHeight > 0) {
+          const stickyHeight = stickyBar.offsetHeight;
+          chatButton.style.bottom = (10 + stickyHeight) + 'px';
+        } else {
+          chatButton.style.bottom = '20px';
+        }
+      }
+    }
+
+    // Create a MutationObserver to watch for changes in the DOM
+    const observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function() {
+        adjustChatPosition();
+      });
+    });
+
+    // Configure the observer to watch for changes in the DOM tree
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    // Run initially in case the element is already present
+    adjustChatPosition();
+  });
+</script>
 
 {%- if request.design_mode -%}
   <script src="{{ 'pickup-availability.js' | asset_url }}" type="module"></script>
