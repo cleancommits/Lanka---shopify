@@ -25,7 +25,7 @@
 -%}
 
 <script>
-  function adjustDrawActionsPosition() {
+  function adjustDrawActionsPosition1() {
 
     const drawActions = document.querySelector(".cart__controls");
     const chatButton = document.querySelector("#chat-button");
@@ -57,7 +57,7 @@
 
   // Run once on load
   window.addEventListener("load", () => {
-    adjustDrawActionsPosition();
+    adjustDrawActionsPosition1();
   });
 
   // Re-run on resize and Shopify section events
@@ -69,21 +69,9 @@
     "shopify:section:deselect",
   ].forEach((evt) => {
     window.addEventListener(evt, () => {
-      adjustDrawActionsPosition();
+      adjustDrawActionsPosition1();
     });
   });
-
-  // Optional: Watch for sidebar visibility changes
-  const sidebar = document.querySelector(".collection-sidebar.js-collection-draw");
-  if (sidebar) {
-    const observer = new MutationObserver(() => {
-      const visible = window.getComputedStyle(sidebar).display !== "none";
-      if (visible) {
-        adjustDrawActionsPosition();
-      }
-    });
-    observer.observe(sidebar, { attributes: true, attributeFilter: ["style", "class"] });
-  }
 </script>
 <div class="cart__controls" data-free-shipping-threshold="{{ free_shipping_threshold | default: 0 }}">
   <div class="cart__details">
