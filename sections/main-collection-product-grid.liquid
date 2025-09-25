@@ -44,7 +44,8 @@
         const chatButton = document.querySelector("#chat-button");
         const sidebar = document.querySelector(".collection-sidebar.js-collection-draw");
 
-        console.log("isSidebarVisible", isSidebarVisible);
+        // Check if sidebar is visible (e.g., drawer is open)
+        const isSidebarVisible = sidebar && sidebar.classList.contains("mfp-ready"); // Adjust class based on your drawer plugin
         if (drawActions && chatButton) {
           const chatButtonHeight = chatButton.offsetHeight;
           if (chatButtonHeight > 0) {
@@ -53,19 +54,22 @@
             console.log("Padding applied to drawActions");
           }
         }
-      }, 100);
+      }, 100); // Check every 100ms
 
+      // Stop polling after 5 seconds to avoid infinite loops
       setTimeout(() => {
         clearInterval(checkElements);
+        console.log("Stopped polling for drawActions and chatButton");
       }, 5000);
     }
 
+    // Run when filter drawer is opened (listen for click on filter button)
     document.addEventListener("click", (event) => {
       if (event.target.closest(".collection-main__filter-btn.js-collection-draw-trigger")) {
         console.log("Filter button clicked, running adjustDrawActionsPosition");
         adjustDrawActionsPosition();
       }
-    });
+});
 
     // Run on load + on resize
     updateSidebarOffset();
