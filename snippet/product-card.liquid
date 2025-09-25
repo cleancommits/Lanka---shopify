@@ -275,10 +275,6 @@
               render_skeleton: true
             %}
 
-            {%- if current_product and current_product.available == false -%}
-              <div class="product-card__out-of-stock-line"></div>
-            {%- endif -%}
-
             {%- if current_product and current_product.variants.size > 1 -%}
                 <style>
                     .product-card__media--swatch-overlay {
@@ -375,16 +371,6 @@
                     background: linear-gradient(to bottom right, transparent 49%, #000000 50%, #000000 51%, transparent 52%);
                     pointer-events: none;
                     }
-                    .product-card__out-of-stock-line {
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: linear-gradient(to bottom right, transparent 49%, #000000 50%, #000000 51%, transparent 52%);
-                    pointer-events: none;
-                    z-index: 10;
-                    }
                     .product-card__overflow__item {
                     position: absolute;
                     right: 12px;
@@ -450,9 +436,6 @@
                     .product-card__swatch__graphic.disabled::after {
                         background: linear-gradient(to bottom right, transparent 48%, #ff0000 49%, #ff0000 51%, transparent 52%);
                     }
-                    .product-card__out-of-stock-line {
-                        background: linear-gradient(to bottom right, transparent 48%, #ff0000 49%, #ff0000 51%, transparent 52%);
-                    }
                 }
                 </style>
 
@@ -467,14 +450,6 @@
                     {%- unless size_option_index >= 0 -%}
                     {%- assign size_option_index = 0 -%}
                     {%- endunless -%}
-
-                    <script>
-                        console.log('=== SIZE SWATCH DEBUG ===');
-                        console.log('Product:', {{ current_product.title | json }});
-                        console.log('Options:', {{ current_product.options | json }});
-                        console.log('Size Index:', {{ size_option_index | json }});
-                        console.log('Variant Count:', {{ current_product.variants.size | json }});
-                    </script>
 
                     {%- comment -%} Render Size Swatches {%- endcomment -%}
                     <div class="product-card__swatch-overlay">
@@ -538,7 +513,6 @@
                             
                             function initProductSwatches() {
                                 const swatches = document.querySelectorAll('.js-variant-swatch');
-                                console.log('Found', swatches.length, 'size swatches for {{ current_product.title | escape }}');
                                 
                                 if (swatches.length === 0) {
                                     console.log('No swatches found - skipping initialization');
@@ -550,13 +524,6 @@
                                     const optionValue = swatch.getAttribute('data-option-value');
                                     const isActive = swatch.classList.contains('active');
                                     const isDisabled = swatch.classList.contains('disabled');
-                                    
-                                    console.log(`Swatch ${index + 1}:`, {
-                                        variantId: variantId,
-                                        size: optionValue,
-                                        active: isActive,
-                                        disabled: isDisabled
-                                    });
                                     
                                     const newSwatch = swatch.cloneNode(true);
                                     swatch.parentNode.replaceChild(newSwatch, swatch);
